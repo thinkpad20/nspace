@@ -9,7 +9,8 @@ Note that this is currently vaporware. It's just some ideas, and more to follow.
 #### Method hiding
 
 Initially only module scope, but eventually in classes too. We want to choose
-exactly which methods we will export, and hide the rest. For example:
+exactly which methods we will export, and hide the rest (we can also have the opposite
+default, and use a `@hidden` decorator for functions we want to hide). For example:
 
 foo.py:
 
@@ -70,7 +71,57 @@ Traceback (most recent call last):
 AttributeError: 'Foo' object has no attribute 'bar'
 ```
 
-#### Coherent namespacing
+#### More powerful imports
 
-Only the top-most module is "sealed;" all others can be expanded, using a
-java-style package system. Details to come.
+We introduce some alternatives to traditional python `import`: `include`, `include_from` and `include_all`.
+
+This is similar to `import foo`:
+```python
+foo = include('foo')
+```
+
+The following two are both similar to 'from foo import bar'
+
+```python
+bar = include('foo.bar')
+include_from('foo', 'bar')
+```
+
+We can give aliases like with python `as`. The following are equivalent:
+
+```python
+cool = include('foo.bar')
+include_from('foo', ('bar', 'cool'))
+```
+
+We can include multiple things
+
+```python
+foo, bar = include('foo', 'bar')
+include_from('foo', 'bar', 'baz', ('qux', 'super_cool'))
+```
+
+Similar to `from foo import *`
+
+```python
+include_all('foo')
+```
+
+Sometimes we only need to use something once in a module. We don't need to pollute the namespace just for that. Why not a `with` statement?
+
+```python
+# `join` and `up` are only defined inside the with statement
+with include_from('os.path', 'join', ('dirname', 'up')):
+    filename = join(up(__file__), 'my_file.txt')
+
+def random_name():
+    names = ['Tom', 'Dick', 'Harry']
+    with include('random.choice') as choice:
+         return choice(names)
+```
+
+We will also throw an error if attempting to include a hidden method.
+
+#### Package system
+
+nspace expands on the basic python module system, giving it the ability to combine modules into other modules and form Java-style package hierarchies. More on this to come later :-)
